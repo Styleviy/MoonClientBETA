@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoonClient - Minecraft Cheat Client</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --accent-primary: #8b2ee0;
+            --accent-secondary: #58a6ff;
+            --accent-glow: #8b5cf6;
+            --text-primary: #f0f0f0;
+            --text-secondary: #8b949e;
+            --success: #3fb950;
+            --gradient-1: linear-gradient(135deg, #8b2ee0 0%, #58a6ff 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(139, 46, 224, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(88, 166, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
+            animation: bgMove 20s ease-in-out infinite;
+        }
+
+        @keyframes bgMove {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-5%, 5%) rotate(2deg); }
+            50% { transform: translate(5%, -5%) rotate(-2deg); }
+            75% { transform: translate(-3%, -3%) rotate(1deg); }
+        }
+
+        /* Stars */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(13, 17, 23, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--accent-glow);
+            border-radius: 50%;
+            filter: blur(10px);
+            opacity: 0.5;
+        }
+
+        .logo-icon::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #c4b5fd 0%, #8b5cf6 50%, transparent 70%);
+            border-radius: 50%;
+            clip-path: polygon(0 0, 70% 0, 70% 100%, 0 100%);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-btn {
+            padding: 10px 24px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 46, 224, 0.4);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 20px 80px;
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--accent-glow);
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, #c4b5fd 50%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 16px 32px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(139, 46, 224, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 16px 32px;
+            background: transparent;
+            border: 2px solid var(--bg-tertiary);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-glow);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-title p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            padding: 32px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--bg-tertiary);
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-glow);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Modules Section */
+        .modules {
+            padding: 100px 20px;
+            background: var(--bg-secondary);
+        }
+
+        .modules-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .modules-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .module-tag {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+
+        .module-tag:hover {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        /* Download Section */
+        .download {
+            padding: 100px 20px;
+            text-align: center;
+        }
+
+        .download-box {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 48px;
+            background: linear-gradient(135deg, rgba(139, 46, 224, 0.1) 0%, rgba(88, 166, 255, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 24px;
+        }
+
+        .download-box h2 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .download-box p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .key-display {
+            background: var(--bg-primary);
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-family: 'Consolas', monospace;
+            font-size: 1.25rem;
+            color: var(--success);
+            margin-bottom: 24px;
+            border: 1px solid var(--bg-tertiary);
+        }
+
+        .key-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 1px solid var(--bg-tertiary);
+        }
+
+        footer p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                padding: 15px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="stars" id="stars"></div>
+
+    <nav>
+        <a href="#" class="logo">
+            <div class="logo-icon"></div>
+            MoonClient
+        </a>
+        <ul class="nav-links">
+            <li><a href="#features">Функции</a></li>
+            <li><a href="#modules">Модули</a></li>
+            <li><a href="#download">Скачать</a></li>
+        </ul>
+        <button class="nav-btn" onclick="scrollToDownload()">Скачать</button>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">BETA 1.3 - Новое обновление!</span>
+            <h1 class="float">MoonClient</h1>
+            <p>Мощный и стильный чит-клиент для Minecraft 1.16.5 с современным интерфейсом, множеством функций и высокой производительностью.</p>
+            <div class="hero-buttons">
+                <a href="#download" class="btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Скачать бесплатно
+                </a>
+                <a href="#features" class="btn-secondary">Узнать больше</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-title">
+            <h2>Почему MoonClient?</h2>
+            <p>Лучший выбор для игроков, которые хотят большего</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Высокая производительность</h3>
+                <p>Оптимизированный код обеспечивает стабильный FPS даже на слабых компьютерах.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <h3>Современный интерфейс</h3>
+                <p>Красивый ClickGui с анимациями, темами и удобной навигацией.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🛡️</div>
+                <h3>Обход античитов</h3>
+                <p>Встроенные функции для обхода популярных античит-систем на серверах.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔧</div>
+                <h3>100+ модулей</h3>
+                <p>Огромный выбор функций для PvP, движения, визуализации и автоматизации.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Сохранение настроек</h3>
+                <p>Все ваши конфигурации сохраняются автоматически между сессиями.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3>ViaVersion</h3>
+                <p>Поддержка подключения к серверам разных версий от 1.8 до 1.20.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="modules" id="modules">
+        <div class="modules-content">
+            <div class="section-title">
+                <h2>Модули</h2>
+                <p>Всё что нужно для победы</p>
+            </div>
+            <div class="modules-list">
+                <span class="module-tag">KillAura</span>
+                <span class="module-tag">Velocity</span>
+                <span class="module-tag">Speed</span>
+                <span class="module-tag">Fly</span>
+                <span class="module-tag">NoFall</span>
+                <span class="module-tag">AutoTotem</span>
+                <span class="module-tag">ESP</span>
+                <span class="module-tag">Tracers</span>
+                <span class="module-tag">Fullbright</span>
+                <span class="module-tag">ChestStealer</span>
+                <span class="module-tag">Scaffold</span>
+                <span class="module-tag">Timer</span>
+                <span class="module-tag">Jesus</span>
+                <span class="module-tag">AntiBot</span>
+                <span class="module-tag">TargetHUD</span>
+                <span class="module-tag">Notifications</span>
+                <span class="module-tag">AutoArmor</span>
+                <span class="module-tag">ClickGui</span>
+                <span class="module-tag">HUD</span>
+                <span class="module-tag">Keystrokes</span>
+                <span class="module-tag">Potions</span>
+                <span class="module-tag">Watermark</span>
+                <span class="module-tag">и многое другое...</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="download" id="download">
+        <div class="download-box">
+            <h2>Скачать MoonClient</h2>
+            <p>Бесплатно и без регистрации. Просто скачай и играй!</p>
+            
+            <div class="key-label">Универсальный ключ активации:</div>
+            <div class="key-display" onclick="copyKey()">MOON-FREE-2025-BETA</div>
+            
+            <a href="MoonLauncher.exe" download class="btn-primary" style="width: 100%; justify-content: center; margin-bottom: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7,10 12,15 17,10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Скачать MoonLauncher.exe
+            </a>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">
+                Запустите лаунчер и введите ключ активации выше.
+            </p>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 MoonClient. Создано с любовью для Minecraft сообщества.</p>
+    </footer>
+
+    <script>
+        // Create stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            star.style.opacity = Math.random() * 0.5 + 0.3;
+            starsContainer.appendChild(star);
+        }
+
+        function scrollToDownload() {
+            document.getElementById('download').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyKey() {
+            navigator.clipboard.writeText('MOON-FREE-2025-BETA');
+            const keyDisplay = document.querySelector('.key-display');
+            const originalText = keyDisplay.textContent;
+            keyDisplay.textContent = 'Скопировано!';
+            keyDisplay.style.color = '#3fb950';
+            setTimeout(() => {
+                keyDisplay.textContent = originalText;
+            }, 1500);
+        }
+
+        // Smooth scroll for all anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+
